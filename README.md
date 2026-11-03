@@ -27,10 +27,17 @@ An agentic AI assistant with safety guardrails built into its design can deliver
 
 ## Architecture
 
-```
-policy_gate ──► agent ◄──► tool ──► (loop) ──► final safety override ──► answer
- (deterministic)  (LLM)    (patient-scoped)     (templates, output scan,
-                                                 citations, disclaimer)
+```mermaid
+flowchart LR
+    Q([Patient question]) --> G["Policy gate<br/>(deterministic: answer / refuse / escalate)"]
+    G -- "v2 only" --> C["Context loader<br/>(profile, medications, allergies)"]
+    G -- v1 --> A
+    C --> A["Agent (LLM)"]
+    A -- "tool calls" --> T["Patient-scoped tools"]
+    T -- observations --> A
+    A -- "draft answer" --> F["Final safety layer<br/>(templates, output scan,<br/>citations, disclaimer)"]
+    G -. "emergency: skips the LLM" .-> F
+    F --> R([Answer])
 ```
 
 - **Deterministic policy gate:** routes every question *before* the LLM sees it: answer, refuse (diagnosis, medication changes, doses) or escalate (chest pain, stroke signs, severe breathing problems, self-harm). Emergencies never reach the model.
